@@ -1,0 +1,174 @@
+// (C) 2021 Magnus Feuer
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// MPL Language
+//
+//
+
+root: (library | any )
+?any: (type_declaration | variable_declaration | statement)*
+
+library: LIBRARY NQ_NAME "{" any  "}"
+
+type_declaration: "type" NQ_NAME "{" type_member* "}" ";"
+
+type_member: datatype NQ_NAME ";"
+
+variable_declaration: datatype NQ_NAME array_spec* ( "=" initialization )? ";"
+
+?datatype: (primitive_type array_spec*)
+           | (defined_type array_spec*)
+
+
+primitive_type: MPL_SIGNED | MPL_UNSIGNED
+              | MPL_BOOL | MPL_BYTE 
+              | MPL_CHAR | MPL_FLOAT 
+              | MPL_STRING
+
+?array_spec: "[" const_range_spec? "]"
+
+const_range_spec: CONST_INT | (CONST_INT ":" CONST_INT)
+
+// range_spec: range_spec | expression | (expression ":" expression)
+
+?initialization: expression | instantiation
+
+statement: compound_statement | expression_statement | if_statement | func_statement
+
+compound_statement: "{" statement* "}"
+
+?expression_statement: ";"
+                      | expression ";"
+                      | assignment ";"
+
+?func_statement: func_call ";"
+
+assignment: var_name array_spec* "=" (expression | instantiation)
+
+instantiation: "@" datatype "{" element_init* "}"
+
+element_init: NQ_NAME "=" (expression  | instantiation) ";"
+
+if_statement: "if" "(" expression ")" statement
+
+func_call: NQ_NAME "(" arg_list? ")"
+arg_list: expression ("," expression)* 
+
+?name: NQ_NAME | FQ_NAME | dereferenced_name
+
+EQ: "=="
+LT: "<"
+GT: ">"
+LTE: "<="
+GTE: ">="
+NE: "!="
+AND: "&&"
+OR: "||"
+NOT: "!"
+
+operator: arit_mul
+          | arit_div
+          | arit_mod
+          | arit_add
+          | arit_sub
+          | lhs EQ rhs
+          | lhs LT rhs
+          | lhs GT rhs
+          | lhs LTE rhs
+          | lhs GTE rhs
+          | lhs NE rhs
+          | lhs AND rhs
+          | lhs OR rhs
+          | NOT expression
+
+arit_mul: lhs "*" rhs
+arit_div: lhs "/" rhs
+arit_mod: lhs "%" rhs
+arit_add: lhs "+" rhs
+arit_sub: lhs "-" rhs // Higher priority than CONST_INT (that can be -3)
+
+lhs.2: expression
+rhs.1: expression
+
+expression: ( "(" expression ")"  | operator | const | (var_name array_spec*) ) 
+            
+// Defined datatype that needs to be
+// resolved by the parser
+//
+defined_type.1: name
+
+// Variable names. 
+// Lower priority than type names
+//
+var_name.2: name
+
+// Access struct members
+dereferenced_name: NQ_NAME ("." NQ_NAME)+
+
+
+
+// Constant values
+//
+?const: CONST_TRUE
+       | CONST_FALSE
+       | CONST_INT
+       | CONST_HEX
+       | CONST_BIN
+       | CONST_FLOAT
+       | CONST_STRING
+
+CONST_TRUE: "true"
+CONST_FALSE: "false"
+CONST_INT: SIGNED_INT
+
+// Prio 2 because 0xAB should not be parsed as CONST_INT(0) NQ_NAME(xAB)
+CONST_HEX.2: HEX_NUMBER 
+
+// Prio 2 because 0b01 should not be parsed as CONST_INT(0) NQ_NAME(b01)
+CONST_BIN.2: BIN_NUMBER
+
+CONST_FLOAT:  (SIGNED_FLOAT | FLOAT) 
+CONST_STRING: ESCAPED_STRING
+
+
+// Non-qualified name. No periods.
+NQ_NAME: ("_"|LETTER) ("_"|LETTER|DIGIT)*
+
+// Fully qualified names. Accept periods.
+FQ_NAME: "." NQ_NAME ("." NQ_NAME)+
+
+
+
+LIBRARY: "library"
+
+MPL_SIGNED: "signed"
+MPL_UNSIGNED: "unsigned"
+MPL_BOOL: "bool"
+MPL_CHAR: "char"
+MPL_BYTE: "byte"
+MPL_FLOAT: "float"
+MPL_STRING: "string"
+
+%import common.INT
+%import common.SIGNED_INT
+%import common.CPP_COMMENT
+%import common.C_COMMENT
+%import common.WS
+%import common.LETTER
+%import common.DIGIT
+%import common.SIGNED_INT
+%import common.DECIMAL_INT
+%import common.DECIMAL
+%import common.FLOAT
+%import common.DOUBLE
+%import common.SIGNED_FLOAT
+// %import common._EXP
+%import common.ESCAPED_STRING
+%import python.HEX_NUMBER
+%import python.BIN_NUMBER
+%ignore WS
+
+
