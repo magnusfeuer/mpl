@@ -34,7 +34,8 @@ const_range_spec: CONST_INT | (CONST_INT ":" CONST_INT)
 
 // range_spec: range_spec | expression | (expression ":" expression)
 
-?initialization: expression | instantiation
+?initialization: expression | instantiation | compound_initialization
+
 
 statement: compound_statement | expression_statement | if_statement | func_statement
 
@@ -48,9 +49,12 @@ compound_statement: "{" statement* "}"
 
 assignment: var_name array_spec* "=" (expression | instantiation)
 
-instantiation: "@" datatype "{" element_init* "}"
+instantiation: datatype compound_initialization
+
+compound_initialization: "{" element_init* "}"
 
 element_init: NQ_NAME "=" (expression  | instantiation) ";"
+
 
 if_statement: "if" "(" expression ")" statement
 
