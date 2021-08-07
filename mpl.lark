@@ -17,7 +17,8 @@ type_declaration: "type" NQ_NAME "{" type_member* "}" ";"
 
 type_member: datatype NQ_NAME ";"
 
-variable_declaration: datatype NQ_NAME array_spec* ( "=" initialization )? ";"
+
+variable_declaration: datatype NQ_NAME (("=" initialization)? | (array_spec "=" array_initialization)?) ";"
 
 ?datatype: (primitive_type array_spec*)
            | (defined_type array_spec*)
@@ -34,7 +35,10 @@ const_range_spec: CONST_INT | (CONST_INT ":" CONST_INT)
 
 // range_spec: range_spec | expression | (expression ":" expression)
 
-?initialization: expression | instantiation | compound_initialization
+?initialization: (compound_init | expression | instantiation )
+
+?array_initialization: "{" (instantiation ("," instantiation)*)? "}"
+
 
 
 statement: compound_statement | expression_statement | if_statement | func_statement
@@ -47,14 +51,13 @@ compound_statement: "{" statement* "}"
 
 ?func_statement: func_call ";"
 
-assignment: var_name array_spec* "=" (expression | instantiation)
+assignment: var_name array_spec* "=" (expression | instantiation | compound_init)
 
-instantiation: datatype compound_initialization
+instantiation: datatype compound_init
 
-compound_initialization: "{" element_init* "}"
+compound_init: "{" ( element_init ("," element_init)*)? "}"
 
-element_init: NQ_NAME "=" (expression  | instantiation) ";"
-
+element_init: NQ_NAME "=" initialization
 
 if_statement: "if" "(" expression ")" statement
 
@@ -98,7 +101,7 @@ lhs.2: expression
 rhs.1: expression
 
 expression: ( "(" expression ")"  | operator | const | (var_name array_spec*) ) 
-            
+
 // Defined datatype that needs to be
 // resolved by the parser
 //
@@ -174,5 +177,5 @@ MPL_STRING: "string"
 %import python.HEX_NUMBER
 %import python.BIN_NUMBER
 %ignore WS
-
-
+%ignore CPP_COMMENT
+%ignore C_COMMENT

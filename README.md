@@ -57,7 +57,7 @@ complicated setups.
         - [Relational operators](#relational-operators)
         - [Bitwise operators](#bitwise-operators)
         - [Logical operators](#logical-operators)
-    - [Deep vs. shallow assignment and compare.**](#deep-vs-shallow-assignment-and-compare)
+    - [Deep vs. shallow assignment and compare.](#deep-vs-shallow-assignment-and-compare)
     - [Statements](#statements)
         - [`if` statement](#if-statement)
         - [`switch` statement](#switch-statement)
@@ -636,7 +636,7 @@ They follow the same rules as in C/C++.
     &&, ||, !
 
 
-## Deep vs. shallow assignment and compare.**
+## Deep vs. shallow assignment and compare.
 
 | Operator | Description                                                                                                            |
 |----------|------------------------------------------------------------------------------------------------------------------------|
