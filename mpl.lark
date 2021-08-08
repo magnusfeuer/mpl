@@ -17,8 +17,7 @@ type_declaration: "type" NQ_NAME "{" type_member* "}" ";"
 
 type_member: datatype NQ_NAME ";"
 
-
-variable_declaration: datatype NQ_NAME (("=" initialization)? | (array_spec "=" array_initialization)?) ";"
+variable_declaration: datatype NQ_NAME (("=" defined_type initialization)? | (array_spec "=" compound_init)?) ";"
 
 ?datatype: (primitive_type array_spec*)
            | (defined_type array_spec*)
@@ -35,11 +34,6 @@ const_range_spec: CONST_INT | (CONST_INT ":" CONST_INT)
 
 // range_spec: range_spec | expression | (expression ":" expression)
 
-?initialization: (compound_init | expression | instantiation )
-
-?array_initialization: "{" (instantiation ("," instantiation)*)? "}"
-
-
 
 statement: compound_statement | expression_statement | if_statement | func_statement
 
@@ -55,16 +49,20 @@ assignment: var_name array_spec* "=" (expression | instantiation | compound_init
 
 instantiation: datatype compound_init
 
+?initialization: compound_init | expression | instantiation
+
 compound_init: "{" ( element_init ("," element_init)*)? "}"
 
-element_init: NQ_NAME "=" initialization
+element_init: initialization | (NQ_NAME "=" initialization) | subscribe
+
+subscribe: NQ_NAME "<-" name
 
 if_statement: "if" "(" expression ")" statement
 
 func_call: NQ_NAME "(" arg_list? ")"
 arg_list: expression ("," expression)* 
 
-?name: NQ_NAME | FQ_NAME | dereferenced_name
+?name: NQ_NAME | FQ_NAME | DR_NAME
 
 EQ: "=="
 LT: "<"
@@ -112,9 +110,6 @@ defined_type.1: name
 //
 var_name.2: name
 
-// Access struct members
-dereferenced_name: NQ_NAME ("." NQ_NAME)+
-
 
 
 // Constant values
@@ -142,11 +137,18 @@ CONST_STRING: ESCAPED_STRING
 
 
 // Non-qualified name. No periods.
+// Example: my_variable
 NQ_NAME: ("_"|LETTER) ("_"|LETTER|DIGIT)*
 
 // Fully qualified names. Accept periods.
+// Example: .global_obj.member
+
 FQ_NAME: "." NQ_NAME ("." NQ_NAME)+
 
+// Derefernced member name.
+// Example: myobj.member
+
+DR_NAME: NQ_NAME ("." NQ_NAME)+
 
 
 LIBRARY: "library"
@@ -158,6 +160,7 @@ MPL_CHAR: "char"
 MPL_BYTE: "byte"
 MPL_FLOAT: "float"
 MPL_STRING: "string"
+
 
 %import common.INT
 %import common.SIGNED_INT

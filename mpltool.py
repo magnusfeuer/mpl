@@ -6,7 +6,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import getopt
-from lark import Lark, logger, Tree, Token
+from lark import Lark, logger, Tree, Token, exceptions
 import sys
 import os
 from pkg_resources import resource_string as resource_bytes
@@ -72,8 +72,14 @@ if __name__ == "__main__":
         print(f"----------------")
         print(f"FILE: {mpl_file_name}")
         print(f"----------------")
-        tree = lark_parser.parse(mpl_text)
-        dump_tree(tree)
+        try:
+            tree = lark_parser.parse(mpl_text)
+            dump_tree(tree)
+        except exceptions.UnexpectedToken as e:
+            [ dump_tree(elem) for elem in e.state.value_stack ]
+            # dump_tree(xe.state.value_stack)
+            raise
+
 #        dict_tree = parse_tree.lark_to_dict(tree)
 #        print(f"{json.dumps(dict_tree, indent=2)}")
         print("-------------------------")
