@@ -6,64 +6,115 @@
 //
 // MPL Language
 //
+
+root: (application | library | statement)*
+
+library: LIBRARY PRIMITIVE_SYMBOL compound_statement
+application: APPLICATION PRIMITIVE_SYMBOL compound_statement
+
+statement: compound_statement 
+           | (type_declaration ";")
+           | (variable_declaration ";")
+           | (script)
+           | (array_declaration ";")
+           | (assign ";")
+           | (subscribe ";")
+           | (expression ";")
+           | foreach
+           | if
+           | ";"
+
+script: SCRIPT PRIMITIVE_SYMBOL (WHEN expression)? compound_statement
+
+compound_statement: "{" statement* "}"
+
 //
+// TYPE DECLARATION
+//
+type_declaration: "type" PRIMITIVE_SYMBOL "{" type_member* "}" 
+type_member: datatype PRIMITIVE_SYMBOL ";"
 
-root: (library | any )
-?any: (type_declaration | variable_declaration | statement)*
-
-library: LIBRARY NQ_NAME "{" any  "}"
-
-type_declaration: "type" NQ_NAME "{" type_member* "}" ";"
-
-type_member: datatype NQ_NAME ";"
-
-variable_declaration: datatype NQ_NAME (("=" defined_type initialization)? | (array_spec "=" compound_init)?) ";"
-
-?datatype: (primitive_type array_spec*)
-           | (defined_type array_spec*)
-
-
-primitive_type: MPL_SIGNED | MPL_UNSIGNED
+?datatype: primitive_type | symbol
+?primitive_type: MPL_SIGNED | MPL_UNSIGNED
               | MPL_BOOL | MPL_BYTE 
               | MPL_CHAR | MPL_FLOAT 
               | MPL_STRING
 
-?array_spec: "[" const_range_spec? "]"
+//
+// VARIABLE DECLARATION
+//
+variable_declaration: [event] datatype PRIMITIVE_SYMBOL (("=" expression) | (SUBSCRIBE expression))? 
 
-const_range_spec: CONST_INT | (CONST_INT ":" CONST_INT)
+//
+// ARRAY DECLARATION
+//
+array_declaration: [event] datatype PRIMITIVE_SYMBOL "[" (range_spec | expression | INT)?"]" ("=" array_init)? 
+range_spec: (expression ":" expression)
+array_init: "{" (expression ("," expression)*)? "}"
 
-// range_spec: range_spec | expression | (expression ":" expression)
+//
+// EVENT SPEC
+//
+?event: (INPUT|OUTPUT)? EVENT
 
-
-statement: compound_statement | expression_statement | if_statement | func_statement
-
-compound_statement: "{" statement* "}"
-
-?expression_statement: ";"
-                      | expression ";"
-                      | assignment ";"
-
-?func_statement: func_call ";"
-
-assignment: var_name array_spec* "=" (expression | instantiation | compound_init)
-
-instantiation: datatype compound_init
-
-?initialization: compound_init | expression | instantiation
-
-compound_init: "{" ( element_init ("," element_init)*)? "}"
-
-element_init: initialization | (NQ_NAME "=" initialization) | subscribe
-
-subscribe: NQ_NAME "<-" name
-
-if_statement: "if" "(" expression ")" statement
-
-func_call: NQ_NAME "(" arg_list? ")"
+//
+// FUNCTION CALL
+//
+func_call: symbol "(" [ arg_list ] ")"
 arg_list: expression ("," expression)* 
 
-?name: NQ_NAME | FQ_NAME | DR_NAME
 
+//
+// INSTANTIATION
+//
+// FIXME: Require "@" for all instantiations. Currently not needed in compound init.
+// -or-
+// FIXME: Replace "@" with "new" for clarification
+// -or-
+// FIXME" Skip instantiation and have every type reference be an instantiation?
+//
+instantiation: INSTANTIATE datatype compound_init
+compound_init: "{" ( element_init ("," element_init)*)? "}"
+element_init: (PRIMITIVE_SYMBOL ASSIGN (expression | array_init)) 
+              | (PRIMITIVE_SYMBOL SUBSCRIBE expression) 
+
+//
+// VARIOUS
+// 
+assign: symbol assign_oper expression 
+?assign_oper: ASSIGN
+              | ADD_ASSIGN
+              | SUB_ASSIGN
+              | MUL_ASSIGN
+              | DIV_ASSIGN
+              | MOD_ASSIGN
+              | LSHIFT_ASSIGN
+              | RSHIFT_ASSIGN
+              | AND_ASSIGN
+              | OR_ASSIGN
+              | XOR_ASSIGN
+
+
+
+subscribe: symbol SUBSCRIBE expression
+if: "if" "(" expression ")" compound_statement
+foreach: "foreach" symbol "in" "[" range_spec "]" compound_statement
+
+//
+// EXPRESSION
+//
+//expression: ("(" expression ")") | operator | const | instantiation | symbol | func_call
+expression: ("(" expression ")") | operator | const | instantiation | symbol | func_call
+
+//
+// SYMBOL GRAMMAR
+//
+symbol: [GLOBAL] PRIMITIVE_SYMBOL [index] ("." PRIMITIVE_SYMBOL [index])*
+index: "[" expression "]"
+
+//
+// OPERATOR
+//
 EQ: "=="
 LT: "<"
 GT: ">"
@@ -73,7 +124,6 @@ NE: "!="
 AND: "&&"
 OR: "||"
 NOT: "!"
-
 operator: arit_mul
           | arit_div
           | arit_mod
@@ -98,25 +148,11 @@ arit_sub: lhs "-" rhs // Higher priority than CONST_INT (that can be -3)
 lhs.2: expression
 rhs.1: expression
 
-expression: ( "(" expression ")"  | operator | const | (var_name array_spec*) ) 
-
-// Defined datatype that needs to be
-// resolved by the parser
-//
-defined_type.1: name
-
-// Variable names. 
-// Lower priority than type names
-//
-var_name.2: name
-
-
-
 // Constant values
 //
 ?const: CONST_TRUE
        | CONST_FALSE
-       | CONST_INT
+       | SIGNED_INT
        | CONST_HEX
        | CONST_BIN
        | CONST_FLOAT
@@ -124,34 +160,45 @@ var_name.2: name
 
 CONST_TRUE: "true"
 CONST_FALSE: "false"
-CONST_INT: SIGNED_INT
 
-// Prio 2 because 0xAB should not be parsed as CONST_INT(0) NQ_NAME(xAB)
+// Prio 2 because 0xAB should not be parsed as CONST_INT(0) PRIMITIVE_SYMBOL(xAB)
 CONST_HEX.2: HEX_NUMBER 
 
-// Prio 2 because 0b01 should not be parsed as CONST_INT(0) NQ_NAME(b01)
+// Prio 2 because 0b01 should not be parsed as CONST_INT(0) PRIMITIVE_SYMBOL(b01)
 CONST_BIN.2: BIN_NUMBER
 
 CONST_FLOAT:  (SIGNED_FLOAT | FLOAT) 
 CONST_STRING: ESCAPED_STRING
 
-
 // Non-qualified name. No periods.
 // Example: my_variable
-NQ_NAME: ("_"|LETTER) ("_"|LETTER|DIGIT)*
-
-// Fully qualified names. Accept periods.
-// Example: .global_obj.member
-
-FQ_NAME: "." NQ_NAME ("." NQ_NAME)+
-
-// Derefernced member name.
-// Example: myobj.member
-
-DR_NAME: NQ_NAME ("." NQ_NAME)+
+PRIMITIVE_SYMBOL: ("_"|LETTER) ("_"|LETTER|DIGIT)*
 
 
+APPLICATION: "application"
 LIBRARY: "library"
+WHEN: "when"
+INPUT: "input"
+OUTPUT: "output"
+EVENT: "event"
+SCRIPT: "script"
+INSTANTIATE: "@"
+GLOBAL: "."
+SUBSCRIBE: "<-"
+
+ASSIGN: "="
+ADD_ASSIGN: "+="
+SUB_ASSIGN: "-="
+MUL_ASSIGN: "*="
+DIV_ASSIGN: "/="
+MOD_ASSIGN: "%="
+LSHIFT_ASSIGN: "<<="
+RSHIFT_ASSIGN: ">>="
+AND_ASSIGN: "&="
+OR_ASSIGN: "|="
+XOR_ASSIGN: "^="
+
+
 
 MPL_SIGNED: "signed"
 MPL_UNSIGNED: "unsigned"
@@ -169,8 +216,6 @@ MPL_STRING: "string"
 %import common.WS
 %import common.LETTER
 %import common.DIGIT
-%import common.SIGNED_INT
-%import common.DECIMAL_INT
 %import common.DECIMAL
 %import common.FLOAT
 %import common.DOUBLE

@@ -60,6 +60,7 @@ if __name__ == "__main__":
 
     logger.setLevel(logging.DEBUG)
     with open("mpl.lark", "r") as f:
+#    with open("xx.lark", "r") as f:
         mpl_grammar = f.read()
 
 #    mpl_grammar = resource_bytes('mpl_parser', 'mpl.lark').decode('utf-8')
@@ -76,7 +77,9 @@ if __name__ == "__main__":
             tree = lark_parser.parse(mpl_text)
             dump_tree(tree)
         except exceptions.UnexpectedToken as e:
+            print("EXECPTION - VALUE STACK:")
             [ dump_tree(elem) for elem in e.state.value_stack ]
+            print("---")
             # dump_tree(xe.state.value_stack)
             raise
 
