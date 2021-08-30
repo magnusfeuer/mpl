@@ -82,7 +82,7 @@ element_init: (PRIMITIVE_SYMBOL ASSIGN (expression | array_init))
 //
 // VARIOUS
 // 
-assign: symbol assign_oper (expression | array_init)
+assign: MPL_STAR? symbol assign_oper (expression | array_init)
 ?assign_oper: ASSIGN
               | ADD_ASSIGN
               | SUB_ASSIGN
@@ -203,7 +203,7 @@ OR_ASSIGN: "|="
 XOR_ASSIGN: "^="
 
 
-
+MPL_STAR: "*"
 MPL_SIGNED: "signed"
 MPL_UNSIGNED: "unsigned"
 MPL_BOOL: "bool"
