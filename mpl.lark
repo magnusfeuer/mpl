@@ -122,6 +122,8 @@ NE: "!="
 AND: "&&"
 OR: "||"
 NOT: "!"
+LSHIFT: "<<"
+RSHIFT: ">>"
 operator: arit_mul
           | arit_div
           | arit_mod
@@ -135,6 +137,8 @@ operator: arit_mul
           | lhs NE rhs
           | lhs AND rhs
           | lhs OR rhs
+          | lhs LSHIFT rhs
+          | lhs RSHIFT rhs
           | NOT expression
 
 arit_mul: lhs "*" rhs
@@ -182,7 +186,7 @@ EVENT: "event"
 SCRIPT: "script"
 INSTANTIATE: "@"
 GLOBAL: "."
-SUBSCRIBE.2: "<-"
+SUBSCRIBE: "<-"
 
 ASSIGN: "="
 ADD_ASSIGN: "+="
@@ -190,8 +194,8 @@ SUB_ASSIGN: "-="
 MUL_ASSIGN: "*="
 DIV_ASSIGN: "/="
 MOD_ASSIGN: "%="
-LSHIFT_ASSIGN.2: "<<="
-RSHIFT_ASSIGN.2: ">>="
+LSHIFT_ASSIGN: "<<="
+RSHIFT_ASSIGN: ">>="
 AND_ASSIGN: "&="
 OR_ASSIGN: "|="
 XOR_ASSIGN: "^="
