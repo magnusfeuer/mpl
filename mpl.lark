@@ -31,7 +31,9 @@ compound_statement: "{" statement* "}"
 //
 // TYPE DECLARATION
 //
-type_declaration: "type" PRIMITIVE_SYMBOL "{" type_member* "}" 
+type_declaration: "type" PRIMITIVE_SYMBOL (":" parent_class)?  "{" type_member* "}" 
+parent_class: symbol
+
 type_member: (variable_declaration | array_declaration) ";"
 
 ?datatype: primitive_type | symbol
