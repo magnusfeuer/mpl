@@ -80,7 +80,7 @@ element_init: (PRIMITIVE_SYMBOL ASSIGN (expression | array_init))
 //
 // VARIOUS
 // 
-assign: symbol assign_oper expression 
+assign: symbol assign_oper (expression | array_init)
 ?assign_oper: ASSIGN
               | ADD_ASSIGN
               | SUB_ASSIGN
