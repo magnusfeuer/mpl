@@ -32,7 +32,7 @@ compound_statement: "{" statement* "}"
 // TYPE DECLARATION
 //
 type_declaration: "type" PRIMITIVE_SYMBOL "{" type_member* "}" 
-type_member: datatype PRIMITIVE_SYMBOL ";"
+type_member: (variable_declaration | array_declaration) ";"
 
 ?datatype: primitive_type | symbol
 ?primitive_type: MPL_SIGNED | MPL_UNSIGNED
@@ -48,9 +48,9 @@ variable_declaration: [event] datatype PRIMITIVE_SYMBOL ((ASSIGN expression) | (
 //
 // ARRAY DECLARATION
 //
-array_declaration: [event] datatype PRIMITIVE_SYMBOL "[" (range_spec | expression | INT)?"]" ("=" array_init)? 
+array_declaration: [event] datatype PRIMITIVE_SYMBOL ("[" (range_spec | expression | INT)?"]")+ ("=" array_init)? 
 range_spec: (expression ":" expression)
-array_init: "{" (expression ("," expression)*)? "}"
+array_init: "{" ((expression | array_init) ("," (expression | array_init ))*)? "}"
 
 //
 // EVENT SPEC
@@ -107,7 +107,7 @@ expression: ("(" expression ")") | operator | const | instantiation | symbol | f
 //
 // SYMBOL GRAMMAR
 //
-symbol: [GLOBAL] PRIMITIVE_SYMBOL index? ("." PRIMITIVE_SYMBOL index?)*
+symbol: [GLOBAL] PRIMITIVE_SYMBOL index* ("." PRIMITIVE_SYMBOL index*)*
 index: "[" expression "]"
 
 //
